@@ -26,6 +26,8 @@ let tooltip
 let slider
 let label
 
+let mygraph
+
 // const covidDataUrl = "https://cors-anywhere.herokuapp.com/https://opendata.ecdc.europa.eu/covid19/casedistribution/json/";
 const covidDataUrl = "covid-data.json";
 const worldMapUrl = "https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world.geojson";
@@ -38,7 +40,7 @@ let dateFormatter = new Intl.DateTimeFormat('en', {
 }) 
 
 // color scale for PoU index
-const colorScale = d3.scaleLinear().domain([0,100]).range(["#ede", "#62e"])
+const colorScale = d3.scaleLinear().domain([0,100]).range(["#ded", "#2e4"])
 
 
 // initialize the page and fetch needed data
@@ -69,13 +71,7 @@ function initialize() {
     slider.oninput = onSliderChanged
 
     // create the tooltip
-    tooltip = d3.select("body")
-        .append("div")
-        .attr("id", "mytooltip")
-        .style("position", "absolute")
-        .style("z-index", "10")
-        .style("visibility", "hidden")
-        .text("tooltip");
+    createTooltip();
 
     // fetch all the data
     Promise.all([
@@ -229,6 +225,73 @@ function onSliderChanged() {
     label.innerHTML = dateFormatter.format(dates[i])
 }
 
+function createTooltip() {
+    tooltip = d3.select("body")
+        .append("div")
+        .attr("id", "mytooltip")
+        .style("position", "absolute")
+        .style("z-index", "10")
+        .style("visibility", "hidden")
+    let tooltipText = tooltip.append("div").attr("class", "tooltip-text")
+}
+
+function createSmallChart() {
+    let parent = tooltip;
+    let gWidth = 150;
+    let gHeight = 100;
+    let gsvg = tooltip.append("svg")
+        .attr("width", gWidth)
+        .attr("height", gHeight)
+        .attr("class", "smallMap");
+    let g = gsvg.append('g').attr("transform", "translate(10,10)")
+    
+    var x = gsvg.xScale = d3.scaleTime()
+        .domain([dates[0], dates[dates.length-1]])
+        .range([ 0, gWidth-20 ]);
+    g.append("g")
+        .attr("transform", "translate(0," + (gHeight-20) + ")")
+        .call(d3.axisBottom(x).tickFormat(""));
+
+    var y = gsvg.yScale = d3.scaleLog()
+        .domain([1, 10e5])
+        .range([ gHeight-20, 0 ]);
+    g.append("g")
+        .call(d3.axisLeft(y).tickFormat(""));
+
+    gsvg.g = g;
+    parent.smallChart = gsvg;
+
+}
+
+let ddata;
+
+function updateSmallChart(countryCode) {
+    if(tooltip.smallChart === undefined) createSmallChart();
+    let smallChart = tooltip.smallChart;
+    let data = dates.map(d => {
+        let v = 0.0;
+        if(covidData[d] && covidData[d][countryCode])
+            v = covidData[d][countryCode].cases;
+        return {date:d, value:v};
+    });
+    ddata = data;
+    let x = smallChart.xScale;
+    let y = smallChart.yScale;
+
+    smallChart.selectAll(".line").remove()
+    smallChart.g.append("path")
+        .datum(data)
+        .attr("class", "line")
+        .attr("fill", "none")
+        .attr("stroke", "steelblue")
+        .attr("stroke-width", 1.5)
+        .attr("d", d3.line()
+            .x(function(d) { return x(d.date) })
+            .y(function(d) { return y(Math.max(1,d.value)) })
+        )
+}
+
+
 // visualize the tooltip
 function showTooltip(countryCode) {
     let data = currentRecord[countryCode];
@@ -240,13 +303,70 @@ function showTooltip(countryCode) {
         "<tr><th>Deaths</th><td>"+(data?data.deaths:0)+"</td></tr>" + 
         "</table>";
           
-    d3.select("#mytooltip")
+    d3.select("#mytooltip ")
         .style("visibility", "visible")
-        .html(content)
-        .style("top", (d3.event.pageY-10)+"px") 
+        .style("top", (d3.event.pageY-10-200)+"px") 
         .style("left",(d3.event.pageX+10)+"px")
+
+    d3.select("#mytooltip .tooltip-text")
+        .html(content)
+    updateSmallChart(countryCode)
 }
 
 function hideToolTip() {
     d3.select("#mytooltip").style("visibility", "hidden")
+}
+
+
+function foo() {
+
+    let data = dates.map(d => {
+        let v = 0.0;
+        if(covidData[d] && covidData[d]['ITA'])
+            v = covidData[d]['ITA'].cases;
+        return {date:d, value:v};
+    });
+
+    let gWidth = 800;
+    let gHeight = 500;
+
+    mygraph = d3.select("body").append("div")
+        .attr("id", "mygraph")
+        .style("position", "absolute")
+        .style("z-index", "10")
+        .style("width", gWidth + "px")
+        .style("height", gHeight + "px")
+        .style("left", "20px")
+        .style("top", "20px")
+        .style("background-color","white")
+    let mysvg = mygraph.append("svg")
+        .attr("width", gWidth)
+        .attr("height", gHeight)
+        .attr("class", "map");
+
+    
+    var x = d3.scaleTime()
+        .domain(d3.extent(data, function(d) { return d.date; }))
+        .range([ 0, gWidth ]);
+    mysvg.append("g")
+        .attr("transform", "translate(0," + height + ")")
+        .call(d3.axisBottom(x));
+
+    var y = d3.scaleLinear()
+        .domain([0, d3.max(data, function(d) { return +d.value; })])
+        .range([ gHeight, 0 ]);
+    mysvg.append("g")
+        .call(d3.axisLeft(y));
+
+    mysvg.append("path")
+        .datum(data)
+        .attr("fill", "none")
+        .attr("stroke", "steelblue")
+        .attr("stroke-width", 1.5)
+        .attr("d", d3.line()
+        .x(function(d) { return x(d.date) })
+        .y(function(d) { return y(d.value) })
+        )
+
+    
 }

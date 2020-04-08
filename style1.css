@@ -61,3 +61,8 @@ svg {
 #mytooltip td { text-align: end; }
 
 #mytooltip h1 { font-size:12px;	}
+
+
+.smallMap {
+    background-color: rgba(255,255,255,0.8);
+}
