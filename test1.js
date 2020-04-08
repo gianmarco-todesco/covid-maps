@@ -1,4 +1,3 @@
-"use strict";
 
 const width = 800;
 const height = width * 0.7;
