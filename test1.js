@@ -1,3 +1,4 @@
+"use strict";
 
 const width = 800;
 const height = width * 0.7;
@@ -217,7 +218,7 @@ function showTooltip(countryCode) {
     let fv = faoValues[countryCode]
     
     let content = "<h1>"+nameByCountryCode[countryCode]+"</h1><table>" +
-        "<tr><th>Fao</th><td>"+(fv>0 ? fv + "%" : "")+"</td></tr>" + 
+        "<tr><th>POU</th><td>"+(fv>0 ? fv + "%" : "")+"</td></tr>" + 
         "<tr><th>Cases</th><td>"+(data?data.cases:0)+"</td></tr>" + 
         "<tr><th>Deaths</th><td>"+(data?data.deaths:0)+"</td></tr>" + 
         "</table>";
