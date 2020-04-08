@@ -153,22 +153,26 @@ function processWorldMap(data) {
     });
 }
 
-
+// get the bubble radius reprenting the number
+// of confirmed covid-19 cases for a given country
 function getBubbleRadius(countryCode) {
     let data = currentRecord[countryCode];
+    // we have no data: return 0
     if(data === undefined) return 0;
     let c = data.cases
     if(c==0) return 0;
+    // there are some cases. The radius is proportional to the log of nr. of cases
     return 3*Math.log(c)
 }
 
+// get the color representing the PoU of the given country
 function getFaoColor(countryCode) {
     let v = faoValues[countryCode]
     if(v === undefined || v<0) return "#eee";
     else return colorScale(v);
 }
 
-
+// we have the data and we can build the map
 function buildMap() {
 
     let g = svg.append("g");
@@ -180,6 +184,8 @@ function buildMap() {
         .attr("d", geopath)
         .style('fill', d => getFaoColor(d.id))
         .style('stroke', 'none');
+
+    // handle tooltip
     paths
         .on("mouseover", function(d,i) {
             d3.select(this).style('stroke', 'magenta');
@@ -207,6 +213,7 @@ function buildMap() {
         // .style('opacity', '0.2');
 }
 
+// change the current date
 function setTime(t) {
     let rec = covidData[t]
     if(rec === undefined) return;
@@ -215,14 +222,15 @@ function setTime(t) {
     d3.selectAll('.bubble').attr("r", d => getBubbleRadius(d.id))
 }
 
+// slider callback
 function onSliderChanged() {
     let i = Math.min(dates.length-1, Math.floor(dates.length*this.value*0.01))
     setTime(dates[i])
     label.innerHTML = dateFormatter.format(dates[i])
 }
 
+// visualize the tooltip
 function showTooltip(countryCode) {
-
     let data = currentRecord[countryCode];
     let fv = faoValues[countryCode]
     
@@ -231,8 +239,7 @@ function showTooltip(countryCode) {
         "<tr><th>Cases</th><td>"+(data?data.cases:0)+"</td></tr>" + 
         "<tr><th>Deaths</th><td>"+(data?data.deaths:0)+"</td></tr>" + 
         "</table>";
-        
-
+          
     d3.select("#mytooltip")
         .style("visibility", "visible")
         .html(content)
