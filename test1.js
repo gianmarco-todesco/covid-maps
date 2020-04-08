@@ -1,3 +1,4 @@
+"use strict";
 
 const width = 800;
 const height = width * 0.7;
@@ -23,6 +24,8 @@ let faoRawData
 let faoValues = {}
 
 let tooltip
+let slider
+let label
 
 // const covidDataUrl = "https://cors-anywhere.herokuapp.com/https://opendata.ecdc.europa.eu/covid19/casedistribution/json/";
 const covidDataUrl = "covid-data.json";
@@ -77,6 +80,7 @@ function initialize() {
         label.innerHTML = dateFormatter.format(currentDate)
     })
 
+/*
 
     // load and display the World
     d3.json("https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world.geojson", 
@@ -84,8 +88,8 @@ function initialize() {
             data.features.forEach(d => {
                 d.centroid = projection(d3.geoCentroid(d));                
             });
-            topo = data
     });
+    */
 }
 
 window.onload = initialize
@@ -136,11 +140,7 @@ function processWorldMap(data) {
 }
 
 function integrateFaoData() {
-    faoRawData.forEach(d => {
-        let c = countryCodeByName[d.name]
-        if(c === undefined) console.log("not found: ", d.name)
-        else faoValues[c] = d.value
-    })
+    faoRawData.forEach(d => faoValues[d.code] = d.value) 
 }
 
 
