@@ -1,0 +1,49 @@
+.slider-container {
+    margin:4em 40px 4em 40px;
+    touch-action: none;
+}
+.slider {
+    -webkit-appearance: none;
+    width: 400px;
+    height: 15px;
+    border-radius: 5px;  
+    background: #d3d3d3;
+    outline: none;
+    opacity: 0.7;
+    -webkit-transition: .2s;
+    transition: opacity .2s;
+}
+  
+.slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 25px;
+    height: 25px;
+    border-radius: 50%; 
+    background: #4CAF50;
+    cursor: pointer;
+}
+  
+.slider::-moz-range-thumb {
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    background: #4CAF50;
+    cursor: pointer;
+}
+
+body {
+    padding:30px;
+}
+
+#mapid {
+    width:600px;
+    height:600px;
+    border:solid 1px black;
+    box-shadow: 5px 5px 5px gray;
+}
+
+input, span {
+    display: inline-block;
+    vertical-align: middle;
+}

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Covid-19 world map</title>
+        <meta charset="utf-8">
+        <script type="text/javascript" src="https://d3js.org/d3.v4.min.js"></script>
+        <script src="test1.js"></script>
+        <style>
+            svg { border:solid 1px black;}
+
+            .slider-container {
+    margin:4em 40px 4em 40px;
+    touch-action: none;
+}
+.slider {
+    -webkit-appearance: none;
+    width: 400px;
+    height: 15px;
+    border-radius: 5px;  
+    background: #d3d3d3;
+    outline: none;
+    opacity: 0.7;
+    -webkit-transition: .2s;
+    transition: opacity .2s;
+}
+  
+.slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 25px;
+    height: 25px;
+    border-radius: 50%; 
+    background: #4CAF50;
+    cursor: pointer;
+}
+  
+.slider::-moz-range-thumb {
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    background: #4CAF50;
+    cursor: pointer;
+}
+
+body {
+    padding:30px;
+}
+
+#mytooltip {	
+    position: absolute;			
+    text-align: center;			
+    width: 120px;					
+    padding: 2px;				
+    font: 12px sans-serif;		
+    background: lightsteelblue;	
+    border: 0px;		
+    border-radius: 8px;			
+    pointer-events: none;	
+    font-size:15px;		
+    
+}
+
+#mytooltip th { text-align: end; }
+#mytooltip td { text-align: end; }
+
+#mytooltip h1 {
+    font-size:20px;		
+}
+
+        </style>
+    </head>
+    <body>
+        <h1>Covid-19 world map</h1>
+        <div class="slider-container">
+            <input type="range" id="slider" class="slider">
+            <span id="t">   </span>
+        </div>
+        <div id="container"></div>
+
+    </body>
+</html>
