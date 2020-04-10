@@ -5,17 +5,3 @@ const series_1 = [
 const series_2 = [
     ["RUS",40.0],["GRL",40.0],["KEN",-1.0]
 ];
-
-/*
-// we need a table : country-code => value
-const valueTable = {};
-series.forEach(item => valueTable[item[0]] = item[1]);
-
-// get range
-let valueRange = d3.extent(series.map(v=>v[1]));
-
-// color scale
-const colorScale = d3.scaleLinear().domain(valueRange)
-    .range(["#eee", "#2e4"]);
-
-*/

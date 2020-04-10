@@ -4,7 +4,8 @@
 class NiceMap {
 
     constructor(options) {
-        const container = this.container = d3.select("#" + options.containerId);
+        const containerId = this.containerId = options.containerId;
+        const container = this.container = d3.select("#" + containerId);
         const width = container.node().clientWidth;
         const height = container.node().clientHeight;
         
@@ -27,11 +28,13 @@ class NiceMap {
         // create the tooltip
         this.createTooltip();
 
-        //createLegend();
-
-
+        
         this.colorScale = options.colorScale || d3.scaleLinear().range(["#eee", "#2e4"]);
         this.processData(options.data)
+
+        this.mapG = this.svg.append("g");
+        this.createLegend();
+
 
         // fetch the map
         const worldMapUrl = "geo_un_simple_boundaries.geojson";
@@ -60,7 +63,7 @@ class NiceMap {
 
 
     buildMap() {
-        let g = this.svg.append("g");
+        let g = this.mapG
 
         // add countries
         const me = this;
@@ -123,71 +126,55 @@ class NiceMap {
         this.tooltip.style("visibility", "hidden")
     }
 
-}
 
+    createLegend() {
+        const y0 = 0; // this.container.node().clientHeight - 40;
 
-
-
-window.onload = function() {
-}
-
-
-
-function createLegend() {
-
-    const legendContainer = d3.select("#legend");
-    const w = legendContainer.node().clientWidth;
-    const h = legendContainer.node().clientHeight;
+        let legend = this.svg.append('g')
+            .attr("transform", "translate(10, "+y0+")")
+        const w = 120;
+        const h = 30;
+        const gradId =  this.containerId + "-gradient";
+        let grad = legend.append("defs")
+          .append("svg:linearGradient")
+          .attr("id", gradId)
+          .attr("x1", "0%")
+          .attr("y1", "100%")
+          .attr("x2", "100%")
+          .attr("y2", "100%")
+          .attr("spreadMethod", "pad");
     
-    var key = legendContainer
-      .append("svg")
-      .attr("width", w)
-      .attr("height", h);
+        grad.append("stop")
+          .attr("offset", "0%")
+          .attr("stop-color", this.colorScale(this.valueRange[0]))
+          .attr("stop-opacity", 1);
+    
+        grad.append("stop")
+          .attr("offset", "100%")
+          .attr("stop-color", this.colorScale(this.valueRange[1]))
+          .attr("stop-opacity", 1);
+    
+        legend.append("rect")
+          .attr("width", w)
+          .attr("height", 10)
+          .style("fill", "url(#" + gradId + ")")
+          .attr("transform", "translate(0,10)");
+    
+        var y = d3.scaleLinear()
+          .range([0, w])
+          .domain(this.valueRange);
+    
+        var yAxis = d3.axisBottom()
+          .scale(y)
+          .ticks(5);
+    
+        legend.append("g")
+          .attr("class", "y axis")
+          .attr("transform", "translate(0,20)")
+          .call(yAxis)
+    
+    }
 
-    var legend = key.append("defs")
-      .append("svg:linearGradient")
-      .attr("id", "gradient")
-      .attr("x1", "0%")
-      .attr("y1", "100%")
-      .attr("x2", "100%")
-      .attr("y2", "100%")
-      .attr("spreadMethod", "pad");
-
-    legend.append("stop")
-      .attr("offset", "0%")
-      .attr("stop-color", colorScale(valueRange[0]))
-      .attr("stop-opacity", 1);
-
-    legend.append("stop")
-      .attr("offset", "100%")
-      .attr("stop-color", colorScale(valueRange[1]))
-      .attr("stop-opacity", 1);
-
-    key.append("rect")
-      .attr("width", w)
-      .attr("height", h - 30)
-      .style("fill", "url(#gradient)")
-      .attr("transform", "translate(0,10)");
-
-    var y = d3.scaleLinear()
-      .range([0, w])
-      .domain(valueRange);
-
-    var yAxis = d3.axisBottom()
-      .scale(y)
-      .ticks(5);
-
-    key.append("g")
-      .attr("class", "y axis")
-      .attr("transform", "translate(0,30)")
-      .call(yAxis)
-
-/*      
-      .append("text")
-      .attr("transform", "rotate(-90)")
-      .attr("y", 0)
-      .attr("dy", ".71em")
-      .style("text-anchor", "end")
-      .text("axis title");
-      */
 }
+
+

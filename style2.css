@@ -1,3 +1,6 @@
+/*
+  tooltip look & feel
+*/
 .nicemap-tooltip {       
     position: absolute;			
     padding: 10px;				
@@ -10,22 +13,10 @@
     box-shadow: 10px 10px 10px gray;
 }
 
-#container {
-    position:relative;
-}
-
-#map-container {
-    
-}
-
-#legend {
-    position:absolute;
-    left:10px;
-    top:350px;
-    width:150px;
-    height:50px;
-}
-
+/*
+   map container look & feel
+   (width & height are mandatory)
+*/
 .nice-map {
     width:400px;
     height:300px;
