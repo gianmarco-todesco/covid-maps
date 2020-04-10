@@ -19,9 +19,9 @@ const worldMapUrl = "geo_un_simple_boundaries.geojson";
 
 // initialize the page and fetch needed data
 function initialize() {
-    let container = document.getElementById("container");
-    let width = container.clientWidth;
-    let height = container.clientHeight;
+    const container = d3.select("#map-container");
+    const width = container.node().clientWidth;
+    const height = container.node().clientHeight;
     
     // we use Mercator projection
     projection = d3.geoMercator()
@@ -29,7 +29,7 @@ function initialize() {
         .translate([width / 2, height *0.7]);
 
     // create the SVG element
-    svg = d3.select("#container").append("svg")
+    svg = container.append("svg")
         .attr("width", width)
         .attr("height", height)
         .attr("class", "map");
@@ -39,6 +39,8 @@ function initialize() {
 
     // create the tooltip
     createTooltip();
+
+    createLegend();
 
     // fetch the map
     fetch(worldMapUrl).then(d=>d.json()).then(d=>worldMap = d).then(buildMap);
@@ -110,3 +112,61 @@ function hideToolTip() {
     d3.select("#mytooltip").style("visibility", "hidden")
 }
 
+function createLegend() {
+
+    const legendContainer = d3.select("#legend");
+    const w = legendContainer.node().clientWidth;
+    const h = legendContainer.node().clientHeight;
+    
+    var key = legendContainer
+      .append("svg")
+      .attr("width", w)
+      .attr("height", h);
+
+    var legend = key.append("defs")
+      .append("svg:linearGradient")
+      .attr("id", "gradient")
+      .attr("x1", "0%")
+      .attr("y1", "100%")
+      .attr("x2", "100%")
+      .attr("y2", "100%")
+      .attr("spreadMethod", "pad");
+
+    legend.append("stop")
+      .attr("offset", "0%")
+      .attr("stop-color", colorScale(valueRange[0]))
+      .attr("stop-opacity", 1);
+
+    legend.append("stop")
+      .attr("offset", "100%")
+      .attr("stop-color", colorScale(valueRange[1]))
+      .attr("stop-opacity", 1);
+
+    key.append("rect")
+      .attr("width", w)
+      .attr("height", h - 30)
+      .style("fill", "url(#gradient)")
+      .attr("transform", "translate(0,10)");
+
+    var y = d3.scaleLinear()
+      .range([0, w])
+      .domain(valueRange);
+
+    var yAxis = d3.axisBottom()
+      .scale(y)
+      .ticks(5);
+
+    key.append("g")
+      .attr("class", "y axis")
+      .attr("transform", "translate(0,30)")
+      .call(yAxis)
+
+/*      
+      .append("text")
+      .attr("transform", "rotate(-90)")
+      .attr("y", 0)
+      .attr("dy", ".71em")
+      .style("text-anchor", "end")
+      .text("axis title");
+      */
+}
