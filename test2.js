@@ -71,6 +71,7 @@ function buildMap() {
     // handle tooltip
     paths
         .on("mouseover", function(d,i) {
+            this.parentNode.appendChild(this);
             d3.select(this).style('stroke', 'black');
             showTooltip(d.properties.ISO3CD, d.properties.MAPLAB);
         })
