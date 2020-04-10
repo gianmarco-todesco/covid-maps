@@ -1,117 +1,137 @@
 "use strict";
 
-let projection; 
-let svg;
-let geopath;
-let worldMap;
-let tooltip
 
-const boundaryColor = '#bbb';
+class NiceMap {
 
-// formatter for the current date
-let dateFormatter = new Intl.DateTimeFormat('en', { 
-    year: 'numeric', 
-    month: 'short', 
-    day: '2-digit' 
-}) 
+    constructor(options) {
+        const container = this.container = d3.select("#" + options.containerId);
+        const width = container.node().clientWidth;
+        const height = container.node().clientHeight;
+        
+        this.boundaryColor = '#bbb';
 
-const worldMapUrl = "geo_un_simple_boundaries.geojson";
+        // we use Mercator projection
+        const projection = this.projection = d3.geoMercator()
+            .scale(width / 2 / Math.PI)
+            .translate([width / 2, height *0.7]);
 
-// initialize the page and fetch needed data
-function initialize() {
-    const container = d3.select("#map-container");
-    const width = container.node().clientWidth;
-    const height = container.node().clientHeight;
+        // create the SVG element
+        this.svg = container.append("svg")
+            .attr("width", width)
+            .attr("height", height)
+            .attr("class", "map");
     
-    // we use Mercator projection
-    projection = d3.geoMercator()
-        .scale(width / 2 / Math.PI)
-        .translate([width / 2, height *0.7]);
+        // geopath transforms GeoJson feature into SVG path 
+        this.geopath = d3.geoPath().projection(projection);
 
-    // create the SVG element
-    svg = container.append("svg")
-        .attr("width", width)
-        .attr("height", height)
-        .attr("class", "map");
+        // create the tooltip
+        this.createTooltip();
+
+        //createLegend();
+
+
+        this.colorScale = options.colorScale || d3.scaleLinear().range(["#eee", "#2e4"]);
+        this.processData(options.data)
+
+        // fetch the map
+        const worldMapUrl = "geo_un_simple_boundaries.geojson";
+        const me = this;
+        fetch(worldMapUrl)
+            .then(d=>d.json())
+            .then(d=>me.worldMap = d)
+            .then(d=>me.buildMap(d));
+        
+    }
+
+    processData(series) {
+        const valueTable = this.valueTable = {}
+        series.forEach(item => valueTable[item[0]] = item[1]);
+        this.valueRange = d3.extent(series.map(v=>v[1]));
+        this.colorScale.domain(this.valueRange);
+    }
+
+
+    // return a color for a given country code
+    getValueColor(countryCode) {
+        let v = this.valueTable[countryCode]
+        if(v === undefined) return '#eee';
+        else return this.colorScale(v);
+    }
+
+
+    buildMap() {
+        let g = this.svg.append("g");
+
+        // add countries
+        const me = this;
+        let paths = g.selectAll("path")
+            .data(this.worldMap.features.filter(f=>f.properties.ISO3CD != "ATA"))
+            .enter()
+            .append("path")
+            .attr("d", me.geopath)
+            .style('fill', d => me.getValueColor(d.properties.ISO3CD))
+            .style('stroke', me.boundaryColor);
+
+
+        // handle tooltip
+        paths
+            .on("mouseover", function(d) {
+                this.parentNode.appendChild(this);
+                d3.select(this).style('stroke', 'black');
+                me.showTooltip(d.properties.ISO3CD, d.properties.MAPLAB);
+            })
+            .on("mousemove", function(d) {
+                me.showTooltip(d.properties.ISO3CD, d.properties.ROMNAM)
+            })
+            .on("mouseout", function(d) {
+                d3.select(this).style('stroke', me.boundaryColor);
+                me.hideToolTip();
+            });
+    }
+
+
     
-    // geopath transforms GeoJson feature into SVG path 
-    geopath = d3.geoPath().projection(projection);
-
-    // create the tooltip
-    createTooltip();
-
-    createLegend();
-
-    // fetch the map
-    fetch(worldMapUrl).then(d=>d.json()).then(d=>worldMap = d).then(buildMap);
-}
-
-window.onload = initialize
-
-// return a color for a given country code
-function getValueColor(countryCode) {
-    let v = valueTable[countryCode]
-    if(v === undefined) return '#eee';
-    else return colorScale(v);
-}
-
-// build the map
-function buildMap() {
-    let g = svg.append("g");
-
-    // add countries
-    let paths = g.selectAll("path")
-        .data(worldMap.features.filter(f=>f.properties.ISO3CD != "ATA"))
-        .enter()
-        .append("path")
-        .attr("d", geopath)
-        .style('fill', d => getValueColor(d.properties.ISO3CD))
-        .style('stroke', boundaryColor);
-
-    // handle tooltip
-    paths
-        .on("mouseover", function(d,i) {
-            this.parentNode.appendChild(this);
-            d3.select(this).style('stroke', 'black');
-            showTooltip(d.properties.ISO3CD, d.properties.MAPLAB);
-        })
-        .on("mousemove", function(d) {showTooltip(d.properties.ISO3CD, d.properties.ROMNAM)})
-        .on("mouseout", function(d,i) {
-            d3.select(this).style('stroke', boundaryColor);
-            hideToolTip();
-        })      
-}
-
-// create a tooltip (see .css file for look&feel)
-function createTooltip() {
-    tooltip = d3.select("body")
-        .append("div")
-        .attr("id", "mytooltip")
-        .style("position", "absolute")
-        .style("z-index", "10")
-        .style("visibility", "hidden")
-        .append("div").attr("class", "tooltip-text")
-}
+    // create a tooltip (see .css file for look&feel)
+    createTooltip() {
+        this.tooltip = d3.select("body")
+            .append("div")
+            .attr("class", "nicemap-tooltip")
+            .style("position", "absolute")
+            .style("z-index", "10")
+            .style("visibility", "hidden");
+        this.tooltip
+            .append("div").attr("class", "tooltip-text")
+    }
 
 
-// visualize & hide the tooltip
-function showTooltip(countryCode, countryName) {
+    // visualize & hide the tooltip
+    showTooltip(countryCode, countryName) {
     
-    let content = "<strong>" + countryName + "</strong>" + 
-        "<br>Value = " + valueTable[countryCode];
-          
-    d3.select("#mytooltip ")
-        .style("visibility", "visible")
-        .style("top", (d3.event.pageY+10)+"px") 
-        .style("left",(d3.event.pageX+10)+"px")
+        let content = "<strong>" + countryName + "</strong>" + 
+            "<br>Value = " + this.valueTable[countryCode];
+            
+        this.tooltip
+            .style("visibility", "visible")
+            .style("top", (d3.event.pageY+10)+"px") 
+            .style("left",(d3.event.pageX+10)+"px")
 
-    d3.select("#mytooltip .tooltip-text")
-        .html(content)
+        this.tooltip.select(".tooltip-text")
+            .html(content)
+    }
+
+    hideToolTip() {
+        this.tooltip.style("visibility", "hidden")
+    }
+
 }
 
-function hideToolTip() {
-    d3.select("#mytooltip").style("visibility", "hidden")
+
+
+
+window.onload = function() {
 }
+
+
 
 function createLegend() {
 
