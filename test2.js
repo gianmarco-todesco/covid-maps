@@ -16,11 +16,20 @@ class NiceMap {
             .scale(width / 2 / Math.PI)
             .translate([width / 2, height *0.7]);
 
+        
+        const zoom = d3.zoom()
+            .scaleExtent([1, 40])
+            .translateExtent([[0,0], [width, height]])
+            .extent([[0, 0], [width, height]])
+            .on("zoom", zoomed);
+
+
         // create the SVG element
         this.svg = container.append("svg")
             .attr("width", width)
             .attr("height", height)
-            .attr("class", "map");
+            .attr("class", "map")
+            .call(zoom);
     
         // geopath transforms GeoJson feature into SVG path 
         this.geopath = d3.geoPath().projection(projection);
@@ -32,7 +41,12 @@ class NiceMap {
         this.colorScale = options.colorScale || d3.scaleLinear().range(["#eee", "#2e4"]);
         this.processData(options.data)
 
-        this.mapG = this.svg.append("g");
+        let mapG = this.mapG = this.svg.append("g");
+
+        function zoomed() {
+            mapG.attr("transform", d3.event.transform);
+        }
+
         this.createLegend();
 
 
@@ -73,7 +87,8 @@ class NiceMap {
             .append("path")
             .attr("d", me.geopath)
             .style('fill', d => me.getValueColor(d.properties.ISO3CD))
-            .style('stroke', me.boundaryColor);
+            .style('stroke', me.boundaryColor)
+            .style('vector-effect', 'non-scaling-stroke');
 
 
         // handle tooltip
